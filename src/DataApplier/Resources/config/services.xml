@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="data_applier.tmp_dir">%kernel.logs_dir%/data-applier-tmp</parameter>
+    </parameters>
+
+    <services>
+        <!-- DATA APPLIERS START -->
+        <service id="data_applier.mock.data.test_data_applier1" class="DataApplier\Mock\Data\TestDataApplier1">
+            <!--<tag name="doctrine.data_applier"/>-->
+        </service>
+        <!-- DATA APPLIERS END -->
+
+        <service id="monolog.handler.rotating_file_handler" class="Monolog\Handler\RotatingFileHandler">
+            <argument>%data_applier.tmp_dir%/data-applier-logger.log</argument>
+        </service>
+
+        <service id="monolog.logger" class="Monolog\Logger">
+            <argument>data-applier</argument>
+            <argument type="collection">
+                <argument type="service" id="monolog.handler.rotating_file_handler"/>
+            </argument>
+        </service>
+
+        <service id="data_applier.command.data_applier_command" class="DataApplier\Command\DataApplierCommand">
+            <argument type="service" id="data_applier.command.data_applier_command_facade"/>
+            <argument type="service" id="data_applier.command.format.command_formatter"/>
+            <tag name="console.command"/>
+        </service>
+
+        <service id="data_applier.command.data_applier_command_facade" class="DataApplier\Command\DataApplierCommandFacade">
+            <argument type="service" id="monolog.logger"/>
+            <argument type="service" id="data_applier.command.data_applier_handler"/>
+            <argument type="service" id="data_applier.command.data_applier_processor"/>
+        </service>
+
+        <service id="data_applier.command.data_applier_handler" class="DataApplier\Command\DataApplierHandler"/>
+
+        <service id="data_applier.command.data_applier_processor" class="DataApplier\Command\DataApplierProcessor">
+            <argument type="service" id="data_applier.entity.identity.data_applier_identifier_calculator"/>
+            <argument type="service" id="data_applier.command.data_applier_processor_facade"/>
+        </service>
+
+        <service id="data_applier.command.data_applier_processor_facade" class="DataApplier\Command\DataApplierProcessorFacade">
+            <argument type="service" id="doctrine.orm.entity_manager"/>
+            <argument type="service" id="data_applier.entity.identity.data_applier_identifier_calculator"/>
+            <argument type="service" id="data_applier.entity.backup.doctrine_entity_backer"/>
+        </service>
+
+        <service id="data_applier.entity.identity.data_applier_identifier_calculator" class="DataApplier\Entity\Identity\DataApplierIdentifierCalculator">
+            <argument type="service" id="annotations.reader"/>
+        </service>
+
+        <service id="data_applier.command.format.command_formatter" class="DataApplier\Command\Format\CommandFormatter"/>
+
+        <service id="data_applier.entity.backup.doctrine_entity_backer" class="DataApplier\Entity\Backup\DoctrineEntityBacker">
+            <argument>%data_applier.tmp_dir%</argument>
+        </service>
+    </services>
+</container>
