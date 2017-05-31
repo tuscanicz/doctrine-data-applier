@@ -55,7 +55,9 @@ class DataApplierProcessorFacade
             $this->drawProgressBar($showProgress, ceil(100 * ($i / $totalOperationsCount)));
             $i++;
         }
-        $this->drawProgressBar($showProgress, ceil(100 * ($i / $totalOperationsCount)));
+        if ($i > 0 && $totalOperationsCount > 0) {
+            $this->drawProgressBar($showProgress, ceil(100 * ($i / $totalOperationsCount)));
+        }
 
         $this->entityManager->flush();
     }
